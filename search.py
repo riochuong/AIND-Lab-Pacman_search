@@ -111,33 +111,6 @@ def depthFirstSearch(problem):
   """
     Dfs does all the traversing work
   """
-  def dfs (new_frontier, actions, problem, explored):
-    
-      # check if we arrived at dest
-      res = 0
-      if (problem.isGoalState(new_frontier[LOC])):
-        actions.append(new_frontier[ACTION])
-        return 1
-
-      # mark this one as explored and get to next frontier
-      explored.add(new_frontier[LOC])
-
-      # now add next frontiers
-      next_frontiers = problem.getSuccessors(new_frontier[LOC])
-      
-      # if we have no where to go
-      if not len(next_frontiers):
-        return 0
-
-      # continue to next node
-      for frontier in next_frontiers:
-        if (not frontier[LOC] in explored ):
-          res = dfs(frontier, actions, problem, explored)
-          if res:
-            actions.append(new_frontier[ACTION])
-            return 1
-      # return failed to find 
-      return res
           
 
   #print "Start:", problem.getStartState()
@@ -145,18 +118,49 @@ def depthFirstSearch(problem):
   #print "Start's successors:", problem.getSuccessors(problem.getStartState())
   # states of the search
   current_state = problem.getStartState()
-  current_state = (current_state, None,0)
-  frontiers = problem.getSuccessors(current_state[LOC])
+  # adding another element for keep tracking of where we come from
+  current_state = (current_state, None,0,None)
+  frontiers = Stack()
+  frontiers.push(current_state)
   explored = set()
+  destination = None
   actions = []
   
   # go through each frontier
-  for frontier in frontiers:
-    explored.add(current_state[LOC])
-    res = dfs(frontier, actions, problem, explored)
-    if res:
-      actions = [move for move in reversed(actions)]
-      return actions
+  while not frontiers.isEmpty():
+    new_frontier = frontiers.pop()
+    # skip frontier if it's been explored
+    if (new_frontier[LOC] in explored):
+      continue
+
+    # mark as explored
+    explored.add(new_frontier[LOC])
+    
+    # check if we hit goal state
+    if problem.isGoalState(new_frontier[LOC]):
+      destination = new_frontier
+      break
+
+    # add new frontiers
+    for next_frontier in problem.getSuccessors(new_frontier[LOC]):
+      if not (next_frontier[LOC] in explored):
+        # mark where it came from
+        # print("push frontier ", next_frontier[LOC], "from ", new_frontier[LOC])
+        # print("explored ",explored)
+        # print("")
+        next_frontier += (new_frontier,)
+        frontiers.push(next_frontier)
+
+    # if we found destination reconstruct the path
+  if destination:
+    print(destination)
+    while destination[COME_FROM]:
+      actions.append(destination[ACTION])
+      destination = destination[COME_FROM]
+    actions = [act for act in reversed(actions)]
+
+ # print("solution ",actions)
+  return actions
 
   util.raiseNotDefined()
 
@@ -198,9 +202,6 @@ def breadthFirstSearch(problem):
     explored.add(frontier[LOC])
     for new_frontier in problem.getSuccessors(frontier[LOC]):
       if not (new_frontier[LOC] in explored):
-        # to know where it came from
-        #print("explored", explored)
-        #print("new front tier loc", new_frontier[LOC])
         new_frontier += (frontier,)
         # update new front tier
         frontiers.push(new_frontier)
