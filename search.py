@@ -69,6 +69,20 @@ def tinyMazeSearch(problem):
   return [s, s, w, s, w, w, s, w]
 
 
+# helper to add action string to the list 
+def add_action(actions, act_str):
+  if act_str == "West":
+    actions.append(w)
+  if act_str == "South":
+    actions.append(s)
+  if act_str == "East":
+    actions.append(e)
+  if act_str == "North":
+    actions.append(n)
+  return actions
+
+
+
 def depthFirstSearch(problem):
   """
   Search the deepest nodes in the search tree first
@@ -89,28 +103,11 @@ def depthFirstSearch(problem):
   # get directions symbol
   from game import Directions
   from util import Stack 
+  
   LOC = 0
   ACTION = 1
   COST = 2
-  s = Directions.SOUTH
-  w = Directions.WEST
-  n = Directions.NORTH
-  e = Directions.EAST
-
-  """
-  Helper to add action to the list 
-  """
-  def add_action(actions, act_str):
-    if act_str == "West":
-      actions.append(w)
-    if act_str == "South":
-      actions.append(s)
-    if act_str == "East":
-      actions.append(e)
-    if act_str == "North":
-      actions.append(n)
-    return actions
-
+  COME_FROM = 3
   """
     Dfs does all the traversing work
   """
@@ -119,7 +116,7 @@ def depthFirstSearch(problem):
       # check if we arrived at dest
       res = 0
       if (problem.isGoalState(new_frontier[LOC])):
-        add_action(actions, new_frontier[ACTION])
+        actions.append(new_frontier[ACTION])
         return 1
 
       # mark this one as explored and get to next frontier
@@ -137,9 +134,9 @@ def depthFirstSearch(problem):
         if (not frontier in explored ):
           res = dfs(frontier, actions, problem, explored)
           if res:
-            add_action(actions, new_frontier[ACTION])
+            actions.append(new_frontier[ACTION])
             return 1
-            
+      # return failed to find 
       return res
           
 
@@ -168,7 +165,54 @@ def breadthFirstSearch(problem):
   Search the shallowest nodes in the search tree first.
   [2nd Edition: p 73, 3rd Edition: p 82]
   """
+
+  from util import Queue
+  LOC = 0
+  ACTION = 1
+  COST = 2
+  COME_FROM = 3
   "*** YOUR CODE HERE ***"
+  initial_state = problem.getStartState()
+  if (problem.isGoalState(initial_state)):
+    print("We are at the solution")
+    return []
+  initial_state = (initial_state,None,0,None)
+  frontiers = Queue()
+  frontiers.push(initial_state)
+  explored = set()
+  actions = []
+  last_frontier = None
+  found_solution = False
+  
+  while(not found_solution):
+    if (frontiers.isEmpty()):
+      print("Error. No path found. Return empty action list")
+      return []
+    frontier = frontiers.pop()
+    explored.add(frontier[LOC])
+    # explore next
+    for new_frontier in problem.getSuccessors(frontier[LOC]):
+      if not (new_frontier[LOC] in explored):
+        # to know where it came from
+        new_frontier += (frontier,)
+        if (problem.isGoalState(new_frontier[LOC])):
+            last_frontier = new_frontier
+            found_solution = True
+            break
+        # update new front tier
+        frontiers.push(new_frontier)
+
+  # back track the path
+  if (last_frontier):
+    actions.append(last_frontier[ACTION])
+    parent = last_frontier[COME_FROM]
+    # keep extracting
+    while parent[COME_FROM]:
+      actions.append(parent[ACTION])
+      parent = parent[COME_FROM]
+
+  return [act for act in reversed(actions)]
+
   util.raiseNotDefined()
 
 
