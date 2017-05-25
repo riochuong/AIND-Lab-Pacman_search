@@ -120,7 +120,7 @@ def depthFirstSearch(problem):
         return 1
 
       # mark this one as explored and get to next frontier
-      explored.add(new_frontier)
+      explored.add(new_frontier[LOC])
 
       # now add next frontiers
       next_frontiers = problem.getSuccessors(new_frontier[LOC])
@@ -131,7 +131,7 @@ def depthFirstSearch(problem):
 
       # continue to next node
       for frontier in next_frontiers:
-        if (not frontier in explored ):
+        if (not frontier[LOC] in explored ):
           res = dfs(frontier, actions, problem, explored)
           if res:
             actions.append(new_frontier[ACTION])
@@ -140,21 +140,22 @@ def depthFirstSearch(problem):
       return res
           
 
-  print "Start:", problem.getStartState()
-  print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-  print "Start's successors:", problem.getSuccessors(problem.getStartState())
+  #print "Start:", problem.getStartState()
+  #print "Is the start a goal?", problem.isGoalState(problem.getStartState())
+  #print "Start's successors:", problem.getSuccessors(problem.getStartState())
   # states of the search
   current_state = problem.getStartState()
-  frontiers = problem.getSuccessors(current_state)
+  current_state = (current_state, None,0)
+  frontiers = problem.getSuccessors(current_state[LOC])
   explored = set()
   actions = []
   
   # go through each frontier
   for frontier in frontiers:
+    explored.add(current_state[LOC])
     res = dfs(frontier, actions, problem, explored)
     if res:
       actions = [move for move in reversed(actions)]
-      print("Actions ", actions)
       return actions
 
   util.raiseNotDefined()
@@ -184,21 +185,23 @@ def breadthFirstSearch(problem):
   last_frontier = None
   found_solution = False
   
-  while(not found_solution):
-    if (frontiers.isEmpty()):
-      print("Error. No path found. Return empty action list")
-      return []
+  while(not frontiers.isEmpty()):
     frontier = frontiers.pop()
-    explored.add(frontier[LOC])
+    # there might be case frontier has two same values
+    if (frontier[LOC] in explored):
+      continue
+    if (problem.isGoalState(frontier[LOC])):
+          last_frontier = frontier
+          found_solution = True
+          break
     # explore next
+    explored.add(frontier[LOC])
     for new_frontier in problem.getSuccessors(frontier[LOC]):
       if not (new_frontier[LOC] in explored):
         # to know where it came from
+        #print("explored", explored)
+        #print("new front tier loc", new_frontier[LOC])
         new_frontier += (frontier,)
-        if (problem.isGoalState(new_frontier[LOC])):
-            last_frontier = new_frontier
-            found_solution = True
-            break
         # update new front tier
         frontiers.push(new_frontier)
 
